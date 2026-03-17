@@ -1,0 +1,95 @@
+database: 'students'
+
+schema:
+  students:
+    description: Таблица, содержащая информацию о обучающихся некоторой школы.
+    columns:
+      id: INTEGER NOT NULL, -- уникальный id школьника
+      name: TEXT NOT NULL, -- Имя школьника
+      surname: TEXT NOT NULL, -- Фамилия школьника
+      gender: TEXT NOT NULL, -- Пол школьника ('м' либо 'ж')
+      age: INTEGER NOT NULL, -- Возраст школьника
+      avg_score: INTEGER NOT NULL, -- Средний балл школьника
+      class: TEXT NOT NULL, -- Класс, в котором обучается школьник
+      classroom: TEXT NOT NULL, -- "Домашний" кабинет школьника, в котором у него проводятся уроки
+      supervisor: TEXT, -- Классный руководитель
+      last_update: TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Дата и время последнего изменения
+
+    primary_key: id
+
+fewshots:
+  - question: Найти старшего мальчика.
+    answer: |
+      SELECT name, surname
+      FROM students
+      WHERE gender = 'м'
+      ORDER BY age DESC 
+      LIMIT 1;
+
+  - question: Найти преподавателя ученика с самой низкой успеваемостью
+    answer: |
+      SELECT supervisor
+      FROM students
+      ORDER BY avg_score
+      LIMIT 1;
+
+  - question: Вывести 5 самых успешных мальчиков и 5 самых успешных девочек
+    answer: |
+      SELECT name, surname
+      FROM (
+        SELECT name, surname 
+        FROM students
+        WHERE gender = 'м'
+        ORDER BY avg_score DESC
+        LIMIT 5
+      )
+      UNION
+      SELECT name, surname
+      FROM (
+        SELECT name, surname 
+        FROM students
+        WHERE gender = 'ж'
+        ORDER BY avg_score DESC
+        LIMIT 5
+      );
+
+  - question: Посчитать количество учеников.
+    answer: |
+      SELECT COUNT(*) FROM students;
+
+  - question: Посчитать сколько детей с каждым именем учится в школе.
+    answer: |
+      SELECT name, COUNT(*) as Количество
+      FROM students
+      GROUP BY name;
+
+  - question: Посчитать сколько девочек имеют балл ниже среднего по школе.
+    answer: |
+      SELECT COUNT(*)
+      FROM students
+      WHERE gender = 'ж'
+        AND avg_score < (SELECT AVG(avg_score) FROM students);
+
+  - question: Найти средний балл по средним баллам классов.
+    answer: |
+      SELECT AVG(score) FROM (
+        SELECT AVG(avg_score) as score
+        FROM students
+        GROUP BY class
+      );
+
+  - question: В каком кабинете учится ученик с самыми плохими оценками?
+    answer: |
+      SELECT class
+      FROM students
+      ORDER BY avg_score
+      LIMIT 1;
+
+  - question: В каком классе больше всего мальчиков?
+    answer: |
+      SELECT class
+      FROM students
+      WHERE gender = 'м'
+      GROUP BY class
+      ORDER BY COUNT(*) DESC
+      LIMIT 1;

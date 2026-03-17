@@ -1,0 +1,13 @@
+CREATE TABLE "students" (
+  "id"	INTEGER NOT NULL,
+  "name"	TEXT NOT NULL,
+  "surname"	TEXT NOT NULL,
+  "gender" TEXT NOT NULL,
+  "age"	INTEGER NOT NULL,
+  "avg_score"	INTEGER NOT NULL,
+  "class"	TEXT NOT NULL,
+  "classroom" TEXT NOT NULL,
+  "supervisor"	TEXT,
+  "last_update"	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY("id")
+)

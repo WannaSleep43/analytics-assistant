@@ -1,0 +1,225 @@
+tests:
+  - question: Сколько всего учеников учится в школе?
+    intents: [count]
+    expected_sql: |
+      SELECT COUNT(*) 
+      FROM students;
+
+  - question: Покажи список всех учеников с их именем, фамилией и классом.
+    intents: select_basic_fields
+    expected_sql: |
+      SELECT name, surname, class
+      FROM students;
+
+  - question: Сколько мальчиков и сколько девочек учится в школе?
+    intents: [function, group_by]
+    expected_sql: |
+      SELECT gender, COUNT(*) 
+      FROM students
+      GROUP BY gender;
+
+  - question: Найди всех учеников старше 16 лет.
+    intents: [filter]
+    expected_sql: |
+      SELECT name, surname
+      FROM students
+      WHERE age > 16;
+
+  - question: Покажи учеников с средним баллом выше 90.
+    intents: [filter]
+    expected_sql: |
+      SELECT name, surname
+      FROM students
+      WHERE avg_score > 90;
+
+  - question: Какой средний балл у учеников?
+    intents: [filter, function]
+    expected_sql: |
+      SELECT AVG(avg_score)
+      FROM students;
+
+  - question: Какой средний балл по классам?
+    intents: [function, group_by]
+    expected_sql: |
+      SELECT AVG(avg_score)
+      FROM students
+      GROUP BY class;
+
+  - question: Сколько учеников учится в каждом классе?
+    intents: [function, group_by]
+    expected_sql: |
+      SELECT class, COUNT(*)
+      FROM students
+      GROUP BY class;
+
+  - question: Покажи 5 учеников с самым высоким средним баллом.
+    intents: [order_by]
+    expected_sql: |
+      SELECT name, surname
+      FROM students
+      ORDER BY avg_score DESC
+      LIMIT 5;
+
+  - question: Найди самого старшего ученика в школе.
+    intents: [order_by]
+    expected_sql: |
+      SELECT name, surname
+      FROM students
+      ORDER BY age DESC
+      LIMIT 1;
+
+  - question: В каком классе самый высокий средний балл учеников?
+    intents: [function, group_by, order_by]
+    expected_sql: |
+      SELECT class 
+      FROM (
+        SELECT class, AVG(avg_score) AS max_avg_score
+        FROM students
+        GROUP BY class
+        ORDER BY max_avg_score DESC
+        LIMIT 1
+      ) s;
+
+  - question: Покажи количество учеников у каждого классного руководителя.
+    intents: [function, group_by]
+    expected_sql: |
+      SELECT supervisor, COUNT(*)
+      FROM students
+      GROUP BY supervisor;
+
+  - question: Найди учеников, чей средний балл выше среднего по школе.
+    intents: [filter, function, subquery]
+    expected_sql: |
+      SELECT name, surname
+      FROM students
+      WHERE avg_score > (
+        SELECT AVG(avg_score)
+        FROM students
+      );
+
+  - question: В каком кабинете учится больше всего учеников?
+    intents: [function, group_by, order_by]
+    expected_sql: |
+      SELECT classroom 
+      FROM (
+        SELECT classroom, COUNT(*) AS student_count
+        FROM students
+        GROUP BY classroom
+        ORDER BY student_count DESC
+        LIMIT 1 
+      ) s;
+
+  - question: Покажи для каждого класса самого успевающего ученика.
+    intents: [function, subquery, filter]
+    expected_sql: |
+      SELECT name, surname, class
+      FROM students s1
+      WHERE avg_score = (
+        SELECT MAX(avg_score)
+        FROM students s2
+        WHERE s1.class = s2.class
+      );
+
+  - question: В каких классах средний балл учеников выше 85?
+    intent: [function, group_by, having]
+    expected_sql: |
+      SELECT class
+      FROM students
+      GROUP BY class
+      HAVING AVG(avg_score) > 85;
+
+  - question: Покажи классы, где учится больше 5 учеников.
+    intent: [function, group_by, having]
+    expected_sql: |
+      SELECT class
+      FROM students
+      GROUP BY class
+      HAVING COUNT(*) > 5;
+
+  - question: Какие кабинеты используются чаще всего? Покажи их по убыванию количества учеников, в случае совпадения, по возрастанию номера кабинета.
+    intent: [function, group_by, order_by]
+    expected_sql: |
+      SELECT classroom
+      FROM students
+      GROUP BY classroom
+      ORDER BY COUNT(*) DESC, classroom;
+
+  - question: Найди класс с наибольшим количеством учеников.
+    intent: [function, group_by, order_by]
+    expected_sql: |
+      SELECT class 
+      FROM (
+        SELECT class, COUNT(*) AS student_count
+        FROM students
+        GROUP BY class
+        ORDER BY student_count DESC
+        LIMIT 1
+      ) t;
+
+  - question: Покажи учеников, которые учатся лучше среднего ученика своего класса.
+    intent: [function, filter, subquery]
+    expected_sql: |
+      SELECT name, surname
+      FROM students s1
+      WHERE avg_score > (
+        SELECT AVG(avg_score)
+        FROM students s2
+        WHERE s1.class = s2.class
+      );
+
+  - question: Найди классы, где средний балл учеников выше среднего по всей школе.
+    intent: [function, group_by, having, subquery]
+    expected_sql: |
+      SELECT class AS avg_score
+      FROM students
+      GROUP BY class
+      HAVING AVG(avg_score) > (
+        SELECT AVG(avg_score)
+        FROM students
+      );
+
+  - question: Найди учеников, которые учатся в тех же классах, что и ученики с баллом выше 95.
+    intent: [function, subquery, filter]
+    expected_sql: |
+      SELECT name, surname
+      FROM students
+      WHERE class IN (
+        SELECT DISTINCT class
+        FROM students
+        WHERE avg_score > 95
+      );
+
+  - question: Найди лучших преподавателей школы.
+    intent: [function, filter, group_by, order_by]
+    expected_sql: |
+      SELECT supervisor 
+      FROM (
+        SELECT supervisor, AVG(avg_score) AS avg_student_score
+        FROM students
+        WHERE supervisor IS NOT NULL
+        GROUP BY supervisor
+      ) t
+      ORDER BY avg_student_score DESC;
+
+  - question: У каких классных руководителей дети учатся хуже среднего по школе, и каков балл средний этих детей?
+    intent: [function, filter, group_by, having, subquery]
+    expected_sql: |
+      SELECT supervisor, AVG(avg_score) AS avg_student_score
+      FROM students
+      WHERE supervisor IS NOT NULL
+      GROUP BY supervisor
+      HAVING AVG(avg_score) < (
+        SELECT AVG(avg_score)
+        FROM students
+      );
+
+  - question: Покажи самых сильных учеников каждого кабинета.
+    intent: [function, filter, subquery]
+    expected_sql: |
+      SELECT name, surname
+      FROM students s1
+      WHERE avg_score = (
+        SELECT MAX(avg_score)
+        FROM students s2
+        WHERE s1.classroom = s2.classroom
+      );
