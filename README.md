@@ -22,14 +22,14 @@ Analytics Assistant — это интерактивный аналитическ
 
 ## Структура проекта
 
-analytics-assistant/
-├─ main.py # FastAPI приложение
-├─ text2sql.py # Генерация SQL с LLM
-├─ data/ # Работа с БД, метаданные
-│ └─ students.db
-├─ errors/ # Поддерживаемые ошибки
-├─ tests/
-│ ├─ test_cases.yaml # Тестовые кейсы
+analytics-assistant/ \
+├─ main.py # FastAPI приложение \
+├─ text2sql.py # Генерация SQL с LLM \
+├─ data/ # Работа с БД, метаданные \
+│ └─ students.db \
+├─ errors/ # Поддерживаемые ошибки \
+├─ tests/ \
+│ ├─ test_cases.yaml # Тестовые кейсы \
 │ └─ test.py # Скрипты для тестирования
 
 ---
