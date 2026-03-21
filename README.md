@@ -74,7 +74,48 @@ LIMIT 1;
 
 ---
 
-## Предустановка
+## Запуск на macOS
+
+### 1. Установить Ollama
+
+```bash
+brew install ollama
+```
+
+Запустить Ollama (в отдельном терминале или в фоне):
+
+```bash
+ollama serve
+```
+
+Скачать модель для генерации SQL:
+
+```bash
+ollama pull qwen2.5-coder:7b
+```
+
+Команда `ollama run` не нужна — она для интерактивного чата с моделью; приложению достаточно работающего сервера и скачанной модели.
+
+### 2. Создать виртуальное окружение и установить зависимости
+
+```bash
+cd analytics-assistant
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3. Запустить приложение
+
+```bash
+python main.py
+```
+
+Swagger: **http://127.0.0.1:8000/docs**
+
+---
+
+## Предустановка (Linux, pacman)
 
 ```bash
 sudo pacman -S ollama
