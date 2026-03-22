@@ -22,7 +22,10 @@ async def lifespan(_: FastAPI):
     await history.open('history')
 
     yield
-    # free resources
+
+    for key, repository in repositories.items():
+        await repository.close()
+    await history.close()
 
 app = FastAPI(lifespan=lifespan)
 
@@ -66,8 +69,8 @@ async def description_ai_query(base: DBList, query: str) -> dict:
 
 @app.post("/ai_query/meta/{base}")
 async def meta_ai_query(base: DBList, query: str) -> dict:
-    description, fewshots = collect_meta(base)
     # prepare description
+    description, fewshots = collect_meta(base)
     return await ai_query(base, query, description, fewshots, query_type='naive')
 
 if __name__ == "__main__":

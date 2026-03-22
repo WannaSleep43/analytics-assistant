@@ -1,3 +1,4 @@
+import functools
 from pathlib import Path
 
 import aiosqlite
@@ -14,20 +15,36 @@ async def create_repo():
         await repositories[name].open(name)
     return repositories
 
+def check_not_closed(func):
+    @functools.wraps(func)
+    async def wrapper(self, *args, **kwargs):
+        if self.closed:
+            raise ValueError("Repository is closed")
+        return await func(self, *args, **kwargs)
+
+    return wrapper
+
 class CommonRepository:
     def __init__(self):
         self.connect: None | aiosqlite.Connection = None
-        self.closed: bool = False
-        self.columns = None
+        self.closed: bool = True
 
     async def open(self, basename: str):
-        self.connect = await aiosqlite.connect(DATA_PATH/ f"{basename}.db")
+        if not self.closed:
+            raise ValueError("Repository is already exists")
 
+        try:
+            self.connect = await aiosqlite.connect(DATA_PATH/ f"{basename}.db")
+        finally:
+            self.closed = False
+
+    @check_not_closed
     async def execute_query(self, query: str):
         async with self.connect.cursor() as cursor:
             q = await cursor.execute(query)
             return await q.fetchall()
 
+    @check_not_closed
     async def described_execute_query(self, query: str):
         async with self.connect.cursor() as cursor:
 
@@ -37,14 +54,21 @@ class CommonRepository:
 
             return [dict(zip(description, row)) for row in rows]
 
+    @check_not_closed
     async def close(self):
-        await self.connect.commit()
-        await self.connect.close()
+        try:
+            await self.connect.commit()
+            await self.connect.close()
+        finally:
+            self.closed = True
+            self.connect = None
+
 
 class HistoryRepository(CommonRepository):
     def __init__(self):
         super().__init__()
 
+    @check_not_closed
     async def insert_row(self, query: str, query_type: str, generation: str | None, status: str):
         async with self.connect.cursor() as cursor:
             await cursor.execute("INSERT INTO history "
