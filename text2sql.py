@@ -10,13 +10,17 @@ async def text2sql(query: str, schema: str = "", fewshots: str = '') -> str:
             ollama.generate(
             # model='deepseek-coder:6.7b',
             model='qwen2.5-coder:7b',
-            options={
-                "temperature": 0.001
-            },
+            # options={
+            #     "temperature": 0.1
+            # },
             prompt=f"""
                 Ты опытный аналитик данных. Ты помогаешь пользователю составить SQL запрос в соответствии с его требованием.
                 
-                Обрати внимание, что в ответ нужно вывести ТОЛЬКО ожидаемый SQL запрос.
+                Обрати внимание, что в ответ нужно вывести ТОЛЬКО ожидаемый SQL запрос в следующем формате:
+                
+                ```sql
+                ЗАПРОС
+                ```
                 
                 Схема базы данных:
                 {schema}
