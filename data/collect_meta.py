@@ -20,16 +20,16 @@ def collect_meta(db: DBList) -> tuple[str, str]:
 
         for table, table_meta in data['schema'].items():
             schema += f'Table {table}\n'
-            schema += f'{' ' * TAB_SIZE}description: {table_meta['description']}\n'
+            schema += f"{' ' * TAB_SIZE}description: {table_meta['description']}\n"
 
             for column, description in table_meta['columns'].items():
-                schema += f'{' ' * 2 * TAB_SIZE + column}: {description}\n'
+                schema += f'{" " * 2 * TAB_SIZE + column}: {description}\n'
             schema += '\n'
 
         fewshots: str = ''
 
         for line in data['fewshots']:
-            fewshots += f'Запрос: {line['question']}\n'
-            fewshots += f'Правильный ответ:\n{line['answer']}\n\n'
+            fewshots += f"[Вопрос]: {line['question']}\n"
+            fewshots += f"[Ответ]: ```sql\n{line['answer']}\n```\n"
 
         return schema, fewshots

@@ -112,13 +112,13 @@ tests:
   - question: Покажи для каждого класса самого успевающего ученика.
     intents: [function, subquery, filter]
     expected_sql: |
-      SELECT name, surname, class
-      FROM students s1
-      WHERE avg_score = (
-        SELECT MAX(avg_score)
-        FROM students s2
-        WHERE s1.class = s2.class
-      );
+      SELECT class, name, surname
+      FROM (
+        SELECT class, name, surname, avg_score,
+               ROW_NUMBER() OVER (PARTITION BY class ORDER BY avg_score DESC) as rn
+        FROM students
+      ) 
+      WHERE rn = 1;
 
   - question: В каких классах средний балл учеников выше 85?
     intent: [function, group_by, having]
@@ -196,7 +196,7 @@ tests:
       FROM (
         SELECT supervisor, AVG(avg_score) AS avg_student_score
         FROM students
-        WHERE supervisor IS NOT NULL
+        WHERE supervisor
         GROUP BY supervisor
       ) t
       ORDER BY avg_student_score DESC;
@@ -216,10 +216,10 @@ tests:
   - question: Покажи самых сильных учеников каждого кабинета.
     intent: [function, filter, subquery]
     expected_sql: |
-      SELECT name, surname
-      FROM students s1
-      WHERE avg_score = (
-        SELECT MAX(avg_score)
-        FROM students s2
-        WHERE s1.classroom = s2.classroom
-      );
+      SELECT classroom, name, surname
+      FROM (
+        SELECT classroom, name, surname, avg_score,
+               ROW_NUMBER() OVER (PARTITION BY classroom ORDER BY avg_score DESC) as rn
+        FROM students
+      )
+      WHERE rn = 1;

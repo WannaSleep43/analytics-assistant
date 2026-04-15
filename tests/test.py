@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 TEST_CASES_PATH = BASE_DIR / "tests" / "test_cases.yaml"
 DB_PATH = BASE_DIR / "data" / "students.db"
 
-GENERATORS = ['meta']
+GENERATORS = ['naive', 'description', 'meta']
 test_stats = {gen: {"passed": 0, "total": 0} for gen in GENERATORS}
 
 @pytest.fixture(scope='session')
@@ -40,7 +40,7 @@ def load_tests():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("case", load_tests())
 @pytest.mark.parametrize("generator", GENERATORS, ids=GENERATORS)
-async def test_naive_text2sql(case, db, client, generator):
+async def test_text2sql(case, db, client, generator):
     test_stats[generator]["total"] += 1
 
     question = case["question"]
@@ -65,11 +65,11 @@ async def test_naive_text2sql(case, db, client, generator):
     except sqlite3.Error as e:
         pytest.fail(f"Generated SQL execution failed:{e}\nquestion: {question}\nquery: {generated_sql}")
 
+
     expected_set = set(tuple(expected_df.iloc[:, i]) for i in range(expected_df.shape[1]))
     generated_set = set(tuple(generated_df.iloc[:, i]) for i in range(generated_df.shape[1]))
 
-    for exp_set in expected_set:
-        if exp_set not in generated_set:
-            assert generated_result == expected_result, f'Question: {question}\nGenerated SQL:\n {generated_sql}'
+    if expected_set.intersection(generated_set) != expected_set:
+        pytest.fail(f'Question: {question}\nGenerated SQL:\n {generated_sql}')
 
     test_stats[generator]["passed"] += 1

@@ -8,21 +8,23 @@ async def text2sql(query: str, schema: str = "", fewshots: str = '') -> str:
     for i in range(3):
         query = await clean_sql(
             ollama.generate(
-            # model='deepseek-coder:6.7b',
-            model='qwen2.5-coder:7b',
+            model='deepseek-coder:6.7b',
+            # model='qwen2.5-coder:7b',
+            options={
+                "temperature": 0.1
+            },
             prompt=f"""
-                Ты - SQL генератор, ты помогаешь аналитику составить SQL запрос в базу.
+                Ты опытный аналитик данных. Ты помогаешь пользователю составить SQL запрос в соответствии с его требованием.
                 
-                Возвращай ТОЛЬКО SQL ЗАПРОС БЕЗ КОММЕНТАРИЕВ.
+                Обрати внимание, что в ответ нужно вывести ТОЛЬКО ожидаемый SQL запрос.
                 
-                Схема БД:
+                Схема базы данных:
                 {schema}
                 
-                Примеры хорошо выполненных работающих запросов:
+                Примеры хорошо составленных запросов:
                 {fewshots}
                 
-                Вопрос аналитика:
-                {query}
+                [Вопрос]: {query}
             """)['response']
         )
 
@@ -38,7 +40,10 @@ async def text2sql(query: str, schema: str = "", fewshots: str = '') -> str:
     raise BadGenerationException('Не удалось сгенерировать корректный sql-запрос')
 
 async def clean_sql(sql: str) -> str:
-    sql = sql.strip()
-    if sql.startswith('```'):
-        return sql.strip('`')[3:]
-    return sql
+    start = sql.find('```sql')
+    end = sql.rfind('```')
+
+    if start == -1 or end == -1 or end <= start:
+        return sql
+
+    return sql[start + 6:end].strip()
