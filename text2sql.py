@@ -6,12 +6,12 @@ from errors.errors import SecurityException, BadGenerationException
 
 async def text2sql(query: str, schema: str = "", fewshots: str = '') -> str:
     for i in range(3):
-        query = await clean_sql(
+        query = await extract_sql(
             ollama.generate(
-            model='deepseek-coder:6.7b',
-            # model='qwen2.5-coder:7b',
+            # model='deepseek-coder:6.7b',
+            model='qwen2.5-coder:7b',
             options={
-                "temperature": 0.1
+                "temperature": 0.001
             },
             prompt=f"""
                 Ты опытный аналитик данных. Ты помогаешь пользователю составить SQL запрос в соответствии с его требованием.
@@ -39,11 +39,9 @@ async def text2sql(query: str, schema: str = "", fewshots: str = '') -> str:
             pass
     raise BadGenerationException('Не удалось сгенерировать корректный sql-запрос')
 
-async def clean_sql(sql: str) -> str:
-    start = sql.find('```sql')
-    end = sql.rfind('```')
-
-    if start == -1 or end == -1 or end <= start:
+async def extract_sql(sql: str) -> str:
+    if '```' not in sql:
         return sql
 
-    return sql[start + 6:end].strip()
+    sql = sql[:sql.rfind('```')]
+    return sql[sql.rfind('```sql') + 6:].strip()
